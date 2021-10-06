@@ -23,7 +23,7 @@ class Generator:
             b = self.b
         else:
             b = int(b)
-        self.p = a + (self.p * self.k) % b
+        self.p = a + (self.p * self.k) % (b - a)
         return self.p
 
     def uniform(self, a, b):
@@ -109,10 +109,14 @@ def f2(lst):
 if __name__ == '__main__':
     # 13, 73009, 63949
     params = [13, 73009, 63949]
-    _labels = [f"R0 parameter: ", f"a parameter: ", f"b parameter: "]
+    _labels = [f"R0 parameter: ", f"k parameter: ", f"b parameter: "]
+    print(f"(R * k) % b")
     for i in range(len(params)):
-        temp = int(input(_labels[i]))
-        params[i] = temp if temp != 0 else params[i]
+        try:
+            temp = int(input(_labels[i]))
+            params[i] = temp if temp != 0 else params[i]
+        except ValueError:
+            continue
 
     gen = Generator(params[0], params[1], params[2])
 
@@ -126,6 +130,15 @@ if __name__ == '__main__':
     if _callable_index < 0:
         _callable_index = 0
 
+    _option_labels = [
+        f"1/(b-a)",
+        f"(1/(sigma * sqrt(2*pi)) * e^(-(x-m)/(2*sigma^2))",
+        f"alpha * e^(-alpha * x)",
+        f"((alpha^nu)/((nu - 1)!)) * x^(nu-1) * e^(-alpha * x)",
+        f"2*(x-a)/((b-a)^2)",
+        f"4*[(x-a)|(b-x)]/((b-a)^2)",
+    ]
+    print(_option_labels[_callable_index])
     _callable_arg_names = inspect.getfullargspec(_callables[_callable_index])[0]
     for i in range(1, len(_callable_arg_names)):
         _call_args[_callable_arg_names[i]] = float(input(_callable_arg_names[i]))
