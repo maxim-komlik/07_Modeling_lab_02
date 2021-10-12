@@ -10,12 +10,12 @@ class Generator:
     k = None
     b = None
 
-    def __init__(self, k, b, p=13):
-        self.k = int(k)
-        self.b = int(b)
-        self.p = int(p)
+    def __init__(self, k: int, b: int, p: int = 13):
+        self.k = k
+        self.b = b
+        self.p = p
 
-    def next(self, a=None, b=None):
+    def next(self, a: int = None, b: int = None):
         if a is None:
             a = 0
         else:
@@ -27,25 +27,25 @@ class Generator:
         self.p = a + (self.p * self.k) % (b - a)
         return self.p/(b - a)
 
-    def uniform(self, a, b):
+    def uniform(self, a: float, b: float):
         return a + (b - a) * self.next()
 
-    def normal(self, m, sigma, n=6):
+    def normal(self, m: float, sigma: float, n: int = 6):
         n = int(n)
         _sum = sum([self.next() for _ in range(n)])
         return m + sigma * int(np.sqrt((12 + n - 1) / n)) * (_sum - int(n / 2))
 
-    def exponential(self, alpha):
+    def exponential(self, alpha: float):
         return -(1 / alpha) * np.log(self.next())
 
-    def gamma(self, alpha, nu):
+    def gamma(self, alpha: float, nu: int):
         return -(1 / alpha) * np.log(reduce(lambda x, y: x * y, [self.next() for _ in range(nu)], 1))
 
-    def triangle(self, a, b, inv=False):
+    def triangle(self, a: float, b: float, inv: bool = False):
         _func = np.amax if inv else np.amin
         return a + (b - a) * _func([self.next(), self.next()])
 
-    def simpson(self, a, b):
+    def simpson(self, a: float, b: float):
         args = [self.next(a / 2, b / 2) for _ in range(2)]
         return sum(args)
 
@@ -59,7 +59,7 @@ class SequenceAnalyzer:
         return result
 
     @staticmethod
-    def std(lst, m=None):
+    def std(lst, m: float = None):
         if m is None:
             m = SequenceAnalyzer.mean(lst)
         rate = np.float64(1.0) / (len(lst) - 1)
@@ -69,18 +69,19 @@ class SequenceAnalyzer:
         return np.sqrt(result), result
 
     @staticmethod
-    def hist(x, n_bins=20):
-        n_bins = int(n_bins)
+    def hist(x, n_bins: int = 20):
         if type(x) != np.ndarray:
             x = np.array(x)
         x_min = np.amin(x)
         x_range = np.amax(x) - x_min
         bin_step = float(x_range) / n_bins
-        bins = [bin_step * i for i in range(n_bins + 1)]
+        bins = [x_min + bin_step * i for i in range(n_bins + 1)]
         if bin_step > 0:
             result = [0] * n_bins
-            for item in x:
-                result[int((item - x_min) / bin_step)-1] += 1
+            x = (x - x_min) / bin_step - 1
+            i_x = x.astype(int)
+            for item in i_x.flat:
+                result[item] += 1
         else:
             raise ZeroDivisionError
         return bins, result
@@ -240,10 +241,9 @@ def lab():
     ]
     print(_option_labels[_callable_index])
     _callable_arg_names = inspect.getfullargspec(_callables[_callable_index])[0]
+    _callable_arg_types = getattr(_callables[_callable_index], "__annotations__")
     for i in range(1, len(_callable_arg_names)):
-        _call_args[_callable_arg_names[i]] = float(input(_callable_arg_names[i]))
-
-    print(_call_args)
+        _call_args[_callable_arg_names[i]] = _callable_arg_types[_callable_arg_names[i]](input(_callable_arg_names[i]))
 
     def _call():
         return _callables[_callable_index](**_call_args)
